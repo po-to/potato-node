@@ -1,4 +1,4 @@
-import * as potato from './potato';
+import * as potato from '@po-to/potato';
 import * as url from 'url';
 import * as http from 'http';
 import cookie = require('cookie');
@@ -11,23 +11,12 @@ import vm = require("vm");
 
 //var Script = process.binding('evals').NodeScript; 
 
-export interface IHttpRequest extends http.IncomingMessage{
-    body : {[key:string]:any},
-    routing : {controller:string, action:string, path:string, args:any}
-}
-
 export interface IControllers {
     getController(con: string): Controller | null;
 }
 
 
-
-
-
-
-
-
-export class Request {
+export class Request implements potato.IRequest{
     public beCache:boolean = false;
     public url?:string;
     constructor(public parent: Request, public readonly controller: string, public readonly action: string, public readonly path?: string, public args:{ [key: string]: any }={}) {}
@@ -147,7 +136,7 @@ export class PError extends Error{
 }
 
 
-export class Controller {
+export class Controller implements potato.IController {
     protected filter<T>(target: T, ...objs) :T{
         let data = {};
         function copy(target, data, obj){
@@ -183,7 +172,7 @@ export function MRouting(req: http.IncomingMessage, res: http.ServerResponse, ne
         next(new Error('404 not found!'));
     }
 }
-export function MEntrance(req: IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void){
+export function MEntrance(req: potato.IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void){
     core.entrance(req, res, function(result){
         res.end(result);
     },next);
@@ -195,7 +184,7 @@ function responseNotFound(res: http.ServerResponse){
 function responseError(res: http.ServerResponse){
     
 }
-export class AMD{
+export class AMD implements potato.IAMD{
     public id:string;
     public dependencies:any[];
     public callback:any;
@@ -347,7 +336,7 @@ function requireAmd(id:string):any|Promise<any>{
 
 
 
-export class Core {
+export class Core implements potato.ICore {
 
     protected readonly _controllers: IControllers;
     
@@ -530,7 +519,7 @@ export class Core {
         });
     }
     
-    entrance(req: IHttpRequest, res: http.ServerResponse,  resolve: (data:any) => void, reject: (error: Error) => void){
+    entrance(req: potato.IHttpRequest, res: http.ServerResponse,  resolve: (data:any) => void, reject: (error: Error) => void){
         let {controller,action,path,args} = req.routing;
         Object.assign(args,req.body);
         let request = new RootRequest(controller, action, path, args, this, req, res);
@@ -701,7 +690,7 @@ export class Model {
 };
 
 
-export class ApiRequest {
+export class ApiRequest implements potato.IApiRequest {
     constructor(public readonly context: Request, public url: string, public method?: string, public data?: { [key: string]: any } | string, public headers?: { [key: string]: string }, public render?: (data: any) => any) {
 
     }

@@ -5,9 +5,20 @@ export interface IHttpRequest extends http.IncomingMessage{
     routing : {controller:string, action:string, path:string, args:any}
 }
 export interface IRequest{
+    parent: IRequest;
+    controller: string;
+    action: string;
+    path?: string;
+    args:{ [key: string]: any };
+    beCache:boolean;
+    url?:string;
+    toUrl(toAmd?:boolean, noArgs?:boolean): string;
+    getCore():ICore;
+    getRoot():IRequest;
+    setResponse(data:any);
+    setHeader(name:string,value:string|string[]);
 
 }
-export interface IRootRequest extends IRequest {}
 
 export interface IAMD{
     id:string;

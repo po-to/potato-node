@@ -1,20 +1,10 @@
 /// <reference types="node" />
+import * as potato from '@po-to/potato';
 import * as http from 'http';
-export interface IHttpRequest extends http.IncomingMessage {
-    body: {
-        [key: string]: any;
-    };
-    routing: {
-        controller: string;
-        action: string;
-        path: string;
-        args: any;
-    };
-}
 export interface IControllers {
     getController(con: string): Controller | null;
 }
-export declare class Request {
+export declare class Request implements potato.IRequest {
     parent: Request;
     readonly controller: string;
     readonly action: string;
@@ -44,7 +34,7 @@ export declare class PError extends Error {
     readonly info: any;
     constructor(eid: string, info?: any);
 }
-export declare class Controller {
+export declare class Controller implements potato.IController {
     protected filter<T>(target: T, ...objs: any[]): T;
     __args_Action(ars: {
         [key: string]: any;
@@ -56,8 +46,8 @@ export declare class Controller {
     }, resolve: (data: any) => void, reject: (error: Error) => void): void;
 }
 export declare function MRouting(req: http.IncomingMessage, res: http.ServerResponse, next: (error?: Error) => void): void;
-export declare function MEntrance(req: IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void): void;
-export declare class AMD {
+export declare function MEntrance(req: potato.IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void): void;
+export declare class AMD implements potato.IAMD {
     id: string;
     dependencies: any[];
     callback: any;
@@ -75,7 +65,7 @@ export declare function setConfig(options: {
         [key: string]: any;
     };
 }): void;
-export declare class Core {
+export declare class Core implements potato.ICore {
     protected readonly _controllers: IControllers;
     routing(str: string, method: string, data?: any): {
         controller: string;
@@ -93,12 +83,13 @@ export declare class Core {
     checkPermission(request: Request): boolean;
     executeRequest<T>(request: Request, internal: boolean, success?: (data: T) => void, failure?: (error: Error) => void): Promise<T>;
     executeRequestToData<T>(request: Request, internal: boolean, toAmd: boolean, success?: (data: T) => void, failure?: (error: Error) => void): Promise<T>;
-    entrance(req: IHttpRequest, res: http.ServerResponse, resolve: (data: any) => void, reject: (error: Error) => void): void;
+    entrance(req: potato.IHttpRequest, res: http.ServerResponse, resolve: (data: any) => void, reject: (error: Error) => void): void;
     toUrl(request: Request, toAmd?: boolean, noArgs?: boolean): string;
+    callApi<T>(requestOptions: ApiRequest, succss?: (data: T) => void, fail?: (error: Error) => void): Promise<T>;
 }
 export declare class Model {
 }
-export declare class ApiRequest {
+export declare class ApiRequest implements potato.IApiRequest {
     readonly context: Request;
     url: string;
     method: string;
@@ -115,4 +106,3 @@ export declare class ApiRequest {
         [key: string]: string;
     }, render?: (data: any) => any);
 }
-export declare function callApi<T>(requestOptions: ApiRequest, succss?: (data: T) => void, fail?: (error: Error) => void): Promise<T>;

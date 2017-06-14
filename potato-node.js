@@ -305,13 +305,15 @@ function setConfig(options) {
 exports.setConfig = setConfig;
 let amdSandbox = vm.createContext({ define: define, requireAmd: requireAmd, amdCaches: amdCaches, amdPaths: amdPaths, console: console });
 function requireAmd(id) {
-    for (let key in amdPaths) {
-        if (id.startsWith(key)) {
-            id = id.replace(key, amdPaths[key]);
+    if (id.indexOf("//:") < 0) {
+        for (let key in amdPaths) {
+            if (id.startsWith(key)) {
+                id = id.replace(key, amdPaths[key]);
+            }
         }
-    }
-    if (!id.endsWith(".js")) {
-        id = id + ".js";
+        if (!id.endsWith(".js")) {
+            id += ".js";
+        }
     }
     if (amdCaches[id]) {
         return amdCaches[id];
@@ -345,7 +347,7 @@ class Core {
             controller = pathname;
             hasController = this.hasController(controller, true);
             if (!hasController) {
-                controller = pathname + '/Index';
+                controller = pathname + '/index';
                 hasController = this.hasController(controller, true);
             }
             if (!hasController) {
@@ -564,6 +566,87 @@ class Core {
             return str;
         }
     }
+    callApi(requestOptions, succss, fail) {
+        return new Promise(function (resolve, reject) {
+            let method = requestOptions.method || "GET";
+            let url = requestOptions.url;
+            let form;
+            if (requestOptions.data && method == "GET") {
+                url += (url.indexOf("?") > -1 ? '&' : '?') + (typeof (requestOptions.data) == "string" ? requestOptions.data : queryString.stringify(requestOptions.data));
+            }
+            else {
+                form = requestOptions.data || null;
+            }
+            let arr = url.match(/\/\/(.+?)\//);
+            let hostname = arr ? arr[1] : "";
+            let cookies = requestOptions.context.getCookie();
+            let headers = Object.assign({}, requestOptions.headers);
+            if (cookies) {
+                let cookiesArr = [];
+                for (let key in cookies) {
+                    let site = key.substr(0, key.indexOf("$"));
+                    if (site && hostname.indexOf(site) > -1) {
+                        let item = cookie.serialize(key.substr(key.indexOf("$") + 1), cookies[key]);
+                        cookiesArr.push(item);
+                    }
+                }
+                if (cookiesArr.length) {
+                    if (headers["Cookie"]) {
+                        cookiesArr.push(headers["Cookie"]);
+                    }
+                    headers["Cookie"] = cookiesArr.join("; ");
+                }
+            }
+            let returnResult = function (data) {
+                let result = requestOptions.render ? requestOptions.render(data) : data;
+                if (result instanceof Error) {
+                    fail && fail(result);
+                    reject(result);
+                }
+                else {
+                    succss && succss(result);
+                    resolve(result);
+                }
+            };
+            let stime = Date.now();
+            request({ url: url, method: method, headers: headers, form: form }, function (error, response, body) {
+                let consume = (Date.now() - stime) / 1000;
+                console.log('curl ' + consume + ' ' + url);
+                let filename = method + "_" + url.replace(hostname, "").replace(/\W/g, '_');
+                let dir = path.join(process.cwd(), 'logs/' + hostname + '/');
+                if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir);
+                }
+                fs.writeFile((dir + filename).substr(0, 200) + ".json", consume + ' ' + JSON.stringify([form, response]));
+                if (response && !error && response.statusCode == 200) {
+                    let arr = response.headers['set-cookie'];
+                    if (arr) {
+                        arr.forEach(function (cookie) {
+                            if (/(^.*)(domain=)(.*)(; .*$)/.test(cookie)) {
+                                cookie = cookie.replace(/(^.*)(domain=)(.*)(; .*$)/, function ($0, $1, $2, $3, $4) { return $3 + "$" + $1 + $2 + $4; });
+                            }
+                            else {
+                                cookie = response['request']['uri'].hostname + "$" + cookie;
+                            }
+                            requestOptions.context.setCookie(cookie);
+                        });
+                    }
+                    returnResult(body);
+                    // body = JSON.parse(body);
+                    // body.succ = parseInt(body.succ);
+                    // if (body.succ) {
+                    //     returnResult(body);
+                    // } else {
+                    //     returnResult(new PError("error"));
+                    // }
+                }
+                else {
+                    returnResult(error || new Error((response ? response.statusCode : 403) + ""));
+                }
+            });
+        }).catch(function () {
+        });
+    }
 }
 exports.Core = Core;
 class Model {
@@ -581,85 +664,3 @@ class ApiRequest {
     }
 }
 exports.ApiRequest = ApiRequest;
-function callApi(requestOptions, succss, fail) {
-    return new Promise(function (resolve, reject) {
-        let method = requestOptions.method || "GET";
-        let url = requestOptions.url;
-        let form;
-        if (requestOptions.data && method == "GET") {
-            url += (url.indexOf("?") > -1 ? '&' : '?') + (typeof (requestOptions.data) == "string" ? requestOptions.data : queryString.stringify(requestOptions.data));
-        }
-        else {
-            form = requestOptions.data || null;
-        }
-        let arr = url.match(/\/\/(.+?)\//);
-        let hostname = arr ? arr[1] : "";
-        let cookies = requestOptions.context.getCookie();
-        let headers = Object.assign({}, requestOptions.headers);
-        if (cookies) {
-            let cookiesArr = [];
-            for (let key in cookies) {
-                let site = key.substr(0, key.indexOf("$"));
-                if (site && hostname.indexOf(site) > -1) {
-                    let item = cookie.serialize(key.substr(key.indexOf("$") + 1), cookies[key]);
-                    cookiesArr.push(item);
-                }
-            }
-            if (cookiesArr.length) {
-                if (headers["Cookie"]) {
-                    cookiesArr.push(headers["Cookie"]);
-                }
-                headers["Cookie"] = cookiesArr.join("; ");
-            }
-        }
-        let returnResult = function (data) {
-            let result = requestOptions.render ? requestOptions.render(data) : data;
-            if (result instanceof Error) {
-                fail && fail(result);
-                reject(result);
-            }
-            else {
-                succss && succss(result);
-                resolve(result);
-            }
-        };
-        let stime = Date.now();
-        request({ url: url, method: method, headers: headers, form: form }, function (error, response, body) {
-            let consume = (Date.now() - stime) / 1000;
-            console.log('curl ' + consume + ' ' + url);
-            let filename = method + "_" + url.replace(hostname, "").replace(/\W/g, '_');
-            let dir = path.join(process.cwd(), 'logs/' + hostname + '/');
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir);
-            }
-            fs.writeFile((dir + filename).substr(0, 200) + ".json", consume + ' ' + JSON.stringify([form, response]));
-            if (response && !error && response.statusCode == 200) {
-                let arr = response.headers['set-cookie'];
-                if (arr) {
-                    arr.forEach(function (cookie) {
-                        if (/(^.*)(domain=)(.*)(; .*$)/.test(cookie)) {
-                            cookie = cookie.replace(/(^.*)(domain=)(.*)(; .*$)/, function ($0, $1, $2, $3, $4) { return $3 + "$" + $1 + $2 + $4; });
-                        }
-                        else {
-                            cookie = response['request']['uri'].hostname + "$" + cookie;
-                        }
-                        requestOptions.context.setCookie(cookie);
-                    });
-                }
-                returnResult(body);
-                // body = JSON.parse(body);
-                // body.succ = parseInt(body.succ);
-                // if (body.succ) {
-                //     returnResult(body);
-                // } else {
-                //     returnResult(new PError("error"));
-                // }
-            }
-            else {
-                returnResult(error || new Error((response ? response.statusCode : 403) + ""));
-            }
-        });
-    }).catch(function () {
-    });
-}
-exports.callApi = callApi;
