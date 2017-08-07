@@ -644,7 +644,6 @@ class Core {
                     returnResult(error || new Error((response ? response.statusCode : 403) + ""));
                 }
             });
-        }).catch(function () {
         });
     }
 }

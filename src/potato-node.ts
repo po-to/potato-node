@@ -9,6 +9,11 @@ import path = require('path');
 import vm = require("vm");
 
 
+export interface IHttpRequest extends http.IncomingMessage{
+    body : {[key:string]:any},
+    routing : {controller:string, action:string, path:string, args:any}
+}
+
 //var Script = process.binding('evals').NodeScript; 
 
 export interface IControllers {
@@ -172,7 +177,7 @@ export function MRouting(req: http.IncomingMessage, res: http.ServerResponse, ne
         next(new Error('404 not found!'));
     }
 }
-export function MEntrance(req: potato.IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void){
+export function MEntrance(req: IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void){
     core.entrance(req, res, function(result){
         res.end(result);
     },next);
@@ -519,7 +524,7 @@ export class Core implements potato.ICore {
         });
     }
     
-    entrance(req: potato.IHttpRequest, res: http.ServerResponse,  resolve: (data:any) => void, reject: (error: Error) => void){
+    entrance(req: IHttpRequest, res: http.ServerResponse,  resolve: (data:any) => void, reject: (error: Error) => void){
         let {controller,action,path,args} = req.routing;
         Object.assign(args,req.body);
         let request = new RootRequest(controller, action, path, args, this, req, res);
@@ -633,8 +638,6 @@ export class Core implements potato.ICore {
                     returnResult(error || new Error((response?response.statusCode:403) + ""));
                 }
             });
-        }).catch(function () {
-
         });
     }
     

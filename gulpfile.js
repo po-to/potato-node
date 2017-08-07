@@ -2,7 +2,7 @@ var DIST = "./";
 var SRC = "./src";
 
 var gulp = require("gulp");
-//var runSequence = require('run-sequence');
+var runSequence = require('run-sequence');
 var ts = require("gulp-typescript");
 var tsProject = ts.createProject("tsconfig.json", {
     //baseUrl: "/xampp/htdocs/typs/src/views",
@@ -33,16 +33,14 @@ gulp.task("tsc", function () {
 gulp.task("tscdoc", function () {
     return gulp.src(SRC + "/**/*.ts")
         .pipe(typedoc({
-            // TypeScript options (see typescript docs) 
-            module: "amd",
+            module: "commonjs",
             target: "es6",
-            includeDeclarations: false,
-            // Output options (see typedoc docs) 
+            includeDeclarations: true,
             out: DIST + "/docs",
-            //json: "output/to/file.json",
-            // TypeDoc options (see typedoc docs) 
-            theme : "default",//minimal
-            name: "tomato",
+            theme : "minimal",
+            name: "@po-to/potato-node",
+            excludePrivate: true, 
+            excludeExternals: true,
             ignoreCompilerErrors: false,
             version: true,
         }))
@@ -56,7 +54,7 @@ gulp.task('examples', function () {
     });
 });
 
-//gulp.task('bulid', function (callback) { runSequence(['tsc', 'tscdoc'] , callback) });
+gulp.task('bulid', function (callback) { runSequence(['tsc'] , callback) });
 
 gulp.task('default', ["bulid"]);
 

@@ -1,6 +1,17 @@
 /// <reference types="node" />
 import * as potato from '@po-to/potato';
 import * as http from 'http';
+export interface IHttpRequest extends http.IncomingMessage {
+    body: {
+        [key: string]: any;
+    };
+    routing: {
+        controller: string;
+        action: string;
+        path: string;
+        args: any;
+    };
+}
 export interface IControllers {
     getController(con: string): Controller | null;
 }
@@ -46,7 +57,7 @@ export declare class Controller implements potato.IController {
     }, resolve: (data: any) => void, reject: (error: Error) => void): void;
 }
 export declare function MRouting(req: http.IncomingMessage, res: http.ServerResponse, next: (error?: Error) => void): void;
-export declare function MEntrance(req: potato.IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void): void;
+export declare function MEntrance(req: IHttpRequest, res: http.ServerResponse, next: (error?: Error) => void): void;
 export declare class AMD implements potato.IAMD {
     id: string;
     dependencies: any[];
@@ -83,7 +94,7 @@ export declare class Core implements potato.ICore {
     checkPermission(request: Request): boolean;
     executeRequest<T>(request: Request, internal: boolean, success?: (data: T) => void, failure?: (error: Error) => void): Promise<T>;
     executeRequestToData<T>(request: Request, internal: boolean, toAmd: boolean, success?: (data: T) => void, failure?: (error: Error) => void): Promise<T>;
-    entrance(req: potato.IHttpRequest, res: http.ServerResponse, resolve: (data: any) => void, reject: (error: Error) => void): void;
+    entrance(req: IHttpRequest, res: http.ServerResponse, resolve: (data: any) => void, reject: (error: Error) => void): void;
     toUrl(request: Request, toAmd?: boolean, noArgs?: boolean): string;
     callApi<T>(requestOptions: ApiRequest, succss?: (data: T) => void, fail?: (error: Error) => void): Promise<T>;
 }

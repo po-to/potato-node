@@ -1,10 +1,10 @@
 {
-  "name": "@po-to/tomato",
-  "version": "0.1.0",
-  "description": "The web interaction framework for browser",
+  "name": "@po-to/potato-node",
+  "version": "0.0.1",
+  "description": "potato-node是NodeJS版本的potato，由于使用JS作服务端语言，所以它与客户端有着更天然的同构关系",
   "homepage": "http://www.po-to.org",
-  "main": "tomato.js",
-  "types": "tomato.d.ts",
+  "main": "potato-node.js",
+  "types": "potato-node.d.ts",
   "scripts": {
     "start": "gulp"
   },
@@ -12,10 +12,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/po-to/tomato"
+    "url": "https://github.com/po-to/potato-node"
   },
   "dependencies": {},
   "devDependencies": {
+    "@po-to/potato": "^0.0.1",
     "@types/cookie": "^0.1.29",
     "@types/node": "^6.0.49",
     "@types/request": "0.0.36",
@@ -25,7 +26,11 @@
     "gulp-typescript": "^3.1.5",
     "gulp-uglify": "^2.1.0",
     "merge2": "^1.0.3",
-    "typedoc": "^0.5.7",
+    "run-sequence": "^2.1.0",
+    "typedoc": "^0.7.1",
     "typescript": "^2.2.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
