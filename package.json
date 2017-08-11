@@ -1,6 +1,6 @@
 {
   "name": "@po-to/potato-node",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "potato-node是NodeJS版本的potato，由于使用JS作服务端语言，所以它与客户端有着更天然的同构关系",
   "homepage": "http://www.po-to.org",
   "main": "potato-node.js",
