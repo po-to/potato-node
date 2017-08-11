@@ -330,6 +330,7 @@ function requireAmd(id:string):any|Promise<any>{
             request(id,function(error, response, body){
                 if (!error && response.statusCode == 200) {
                     vm.runInContext(body,amdSandbox)
+                    amdCaches[id] = amdCaches['.'];
                     resolve(amdCaches['.']);
                 }else{
                     reject(new Error(id+" is not found!"));
