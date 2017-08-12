@@ -16,7 +16,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@po-to/potato": "^0.0.1",
+    "@po-to/potato": "^0.0.2",
     "@types/cookie": "^0.1.29",
     "@types/node": "^6.0.49",
     "@types/request": "0.0.36",
